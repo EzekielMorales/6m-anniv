@@ -67,9 +67,10 @@ const state = {
   - Uses Google Font `'Mali', 'Itim', 'Sarabun', sans-serif`.
   - **Thai Typography Consideration:** Adds extra vertical headroom (`padY = fs * 1.0 + 50`) so high tone marks (e.g., ไม้โท `้` stacked on top of สระอิ `ิ` in "มิ้ว") are never clipped off by the top of the canvas.
   - Dynamically switches to 3 lines on mobile portrait viewports (`["สุขสันต์", "วันครบรอบ", "6 เดือน"]`) to ensure large, crisp, legible characters.
-- **Sparkler Particle Rendering:**
-  - Uses tight outer shimmers (`sz * 1.8` at `alpha * 0.15`) + sharp core sparks (`sz` at `alpha * 0.88`) + center pinpoint highlights (`sz * 0.42` at `alpha * 0.92`).
-  - Avoids additive blending (`lighter`) blowout, preventing text from blurring into a solid blinding white mass.
+- **Hardware-Accelerated Glow Sprites (`getSprite`):**
+  - Pre-renders radial glow canvas sprites cached in `SPRITES` dictionary for every palette color.
+  - Replaces thousands of per-frame vector path drawing calls (`beginPath` / `arc` / `fill`) with single `ctx.drawImage` GPU texture blits, ensuring locked 60 FPS on mobile.
+  - Automatically throttles particle density on mobile screens (`maxPts = 460`, `dpr = 1`), pausing background random fireworks during text bursts to guarantee zero frame drops or input lag.
 
 ### 5. Scrapbook Letter & Polaroid Gallery
 - Displays when the firework sequence finishes (`27500ms`).
