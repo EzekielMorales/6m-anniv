@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ลอยกระทงกับมิ้ว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fffdf8; --page:#f8f6f0; --ink:#34302c; --line:#9fb6d3; --margin:#e8a0a0;
+  --tag:#fff4c9; --pink:#f4a3b5; --orange:#f2a65a; --green:#9cc77d;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#ece8dd; --paper:#fbf8f0; color-scheme: dark; }
+}
+:root[data-theme="dark"]{ --page:#ece8dd; --paper:#fbf8f0; color-scheme: dark; }
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;height:100%;overflow:hidden;color:var(--ink);
+  font-family:"Mali","Itim","Sarabun","Leelawadee UI","Thonburi",sans-serif;
+  background:var(--page);
+  background-image:repeating-linear-gradient(to bottom,transparent 0 33px,var(--line) 33px 34.5px);
+  -webkit-tap-highlight-color:transparent;
+}
+#defs{position:absolute;width:0;height:0;overflow:hidden}
+
+/* ---------- paper-cut UI pieces ---------- */
+.paperbit{
+  background-color:var(--tag);
+  background-image:repeating-linear-gradient(to bottom,transparent 0 16px,rgba(95,127,168,.28) 16px 17px);
+  border:3px solid var(--ink);border-radius:22px;
+  box-shadow:0 0 0 9px var(--paper),10px 14px 18px 4px rgba(58,52,40,.28);
+}
+.btn{
+  font:inherit;font-weight:700;font-size:clamp(20px,4.6vw,28px);color:var(--ink);
+  padding:.45em 1.4em .5em;cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.btn:hover{transform:translateY(-3px) rotate(-1deg)}
+.btn:active{transform:translateY(2px);box-shadow:0 0 0 9px var(--paper),4px 6px 8px 2px rgba(58,52,40,.28)}
+.btn:focus-visible{outline:4px dashed var(--ink);outline-offset:14px}
+.btn.pink{background-color:var(--pink)}
+.btn.orange{background-color:var(--orange)}
+
+/* ---------- music toggle ---------- */
+.music-toggle{
+  position:fixed;top:max(16px,env(safe-area-inset-top,16px));right:max(16px,env(safe-area-inset-right,16px));
+  z-index:35;width:46px;height:46px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;cursor:pointer;background-color:var(--tag);
+  border:3px solid var(--ink);box-shadow:0 0 0 6px var(--paper),5px 8px 12px rgba(58,52,40,.25);
+  transition:transform .2s ease, opacity .2s ease;
+}
+.music-toggle:hover{transform:scale(1.1) rotate(6deg)}
+.music-toggle.muted{opacity:.6;filter:grayscale(.7)}
+
+/* ---------- pick screen ---------- */
+#pick{
+  position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(24px,5vh,56px);padding:24px 16px;
+  background:var(--page);
+  background-image:repeating-linear-gradient(to bottom,transparent 0 33px,var(--line) 33px 34.5px);
+  transition:opacity .8s ease, transform .8s ease;
+}
+#pick::before,#pick::after{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--margin)}
+#pick::before{left:9%}#pick::after{right:9%}
+#pick.gone{opacity:0;transform:scale(1.04);pointer-events:none}
+.title{padding:.25em 1.1em .35em;font-size:clamp(28px,7vw,54px);font-weight:700;transform:rotate(-2deg);text-align:center;line-height:1.3;position:relative;z-index:1}
+.title small{display:block;font-size:.42em;font-weight:400}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(14px,3vw,40px);width:min(960px,100%);position:relative;z-index:1}
+.card{
+  font:inherit;color:var(--ink);background:none;border:0;padding:0;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  transition:transform .25s cubic-bezier(.3,1.6,.5,1);
+}
+.card svg{width:100%;height:auto;overflow:visible}
+.card:hover,.card:focus-visible{transform:translateY(-10px) rotate(-2deg)}
+.card:focus-visible{outline:4px dashed var(--ink);outline-offset:6px;border-radius:18px}
+.card .name{padding:.2em .8em .3em;font-weight:700;font-size:clamp(14px,3.4vw,24px);white-space:nowrap}
+.card:nth-child(1) .name{background-color:#f6d9a8}
+.card:nth-child(2) .name{background-color:#cfe8bd}
+.card:nth-child(3) .name{background-color:#e7cdb8}
+
+/* ---------- scene ---------- */
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block}
+#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
+.flame{opacity:0;transition:opacity .5s ease}
+.lit .flame{opacity:1}
+.flick{transform-box:fill-box;transform-origin:50% 100%;animation:flick .16s ease-in-out infinite alternate}
+@keyframes flick{from{transform:scale(1,1) rotate(-3deg)}to{transform:scale(.9,1.12) rotate(3deg)}}
+.waves{animation:drift 6s ease-in-out infinite alternate}
+.waves.b{animation-duration:8s;animation-direction:alternate-reverse}
+@keyframes drift{from{transform:translateX(-14px)}to{transform:translateX(14px)}}
+#night{transition:opacity 5s ease}
+#glows{mix-blend-mode:screen}
+
+#controls{
+  position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + clamp(18px,4vh,40px));
+  z-index:10;display:flex;flex-direction:column;align-items:center;gap:18px;pointer-events:none;
+  transition:opacity .6s ease;
+}
+#controls > *{pointer-events:auto}
+@media (orientation: landscape){#controls{align-items:flex-end;right:max(5vw,env(safe-area-inset-right,0px));left:auto}}
+#controls.hide{opacity:0}
+#controls.hide > *{pointer-events:none}
+.hint{background-color:var(--paper);border-radius:14px;padding:.2em .8em;font-size:clamp(14px,3.4vw,18px);border-width:2.5px;box-shadow:0 0 0 6px var(--paper),6px 8px 10px 2px rgba(58,52,40,.22)}
+
+/* ---------- note ---------- */
+#noteWrap{position:fixed;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:rgba(20,22,50,.35);opacity:0;pointer-events:none;transition:opacity .8s ease}
+#noteWrap.show{opacity:1;pointer-events:auto}
+.note{
+  position:relative;width:min(88vw,470px);max-height:calc(100% - 20px);overflow:auto;
+  padding:44px 30px 30px 56px;border-radius:6px;border:none;
+  background-color:var(--paper);
+  background-image:linear-gradient(to right,transparent 38px,var(--margin) 38px,var(--margin) 40px,transparent 40px),
+    repeating-linear-gradient(to bottom,transparent 0 31px,#b9cbe0 31px 32.5px);
+  background-position:0 0, 0 12px;
+  box-shadow:14px 20px 30px rgba(20,18,40,.35);
+  transform:scale(.4) rotate(-14deg);transition:transform .9s cubic-bezier(.25,1.5,.45,1);
+  line-height:32.5px;font-size:18px;
+}
+#noteWrap.show .note{transform:scale(1) rotate(-2deg)}
+.note h2{margin:0 0 6px;font-size:26px;line-height:32.5px}
+.note p{margin:0 0 0}
+.note-gallery{margin:12px auto 14px;width:min(100%,300px);text-align:center;user-select:none}
+.polaroid-wrapper{display:flex;align-items:center;justify-content:center;gap:10px}
+.polaroid{
+  background:#fff;padding:8px 8px 12px 8px;border:2.5px solid var(--ink);
+  border-radius:4px;box-shadow:0 0 0 5px #fff,6px 10px 18px rgba(40,30,20,.22);
+  transform:rotate(-1.5deg);transition:transform .25s ease;cursor:pointer;flex:1;max-width:220px
+}
+.polaroid:hover{transform:rotate(0deg) scale(1.03)}
+.polaroid img{width:100%;height:150px;object-fit:cover;object-position:center;display:block;border-radius:2px;border:1px solid rgba(0,0,0,.08);transition:opacity .25s ease}
+.photo-caption{font-size:13px;font-weight:600;color:#63574c;margin-top:6px;line-height:1.2}
+.photo-nav{
+  background-color:var(--tag);border:2.5px solid var(--ink);border-radius:50%;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:bold;cursor:pointer;
+  box-shadow:0 0 0 3px var(--paper),2px 4px 6px rgba(50,40,30,.2);
+  transition:transform .15s ease, background-color .15s;color:var(--ink);flex-shrink:0
+}
+.photo-nav:hover{transform:scale(1.15);background-color:var(--pink)}
+.photo-dots{display:flex;justify-content:center;gap:7px;margin-top:8px}
+.photo-dots .dot{width:9px;height:9px;border-radius:50%;background:#cfc8be;border:1.5px solid var(--ink);cursor:pointer;padding:0;transition:all .2s ease}
+.photo-dots .dot.active{background:var(--pink);transform:scale(1.3);box-shadow:0 0 0 2px var(--paper)}
+.note .sign{text-align:right;margin-top:10px;font-weight:600}
+.tape{position:absolute;top:-14px;left:50%;width:120px;height:32px;margin-left:-60px;background:rgba(244,163,181,.75);transform:rotate(3deg);border-left:2px dashed rgba(255,255,255,.6);border-right:2px dashed rgba(255,255,255,.6)}
+.note .again{margin-top:20px;display:block;margin-left:auto;margin-right:auto;font-size:20px}
+@media (max-width:560px){
+  .cards{grid-template-columns:1fr;width:min(330px,86vw);gap:6px}
+  .card{flex-direction:row;gap:10px}
+  .card svg{width:48%;flex:none}
+  .card .name{font-size:18px}
+}
+@media (max-width:560px) and (max-height:700px){ .card svg{width:36%} }
+@media (prefers-reduced-motion: reduce){
+  .waves,.flick{animation:none}
+}
+</style>
+</head>
+<body>
+
+<audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
+<button id="musicToggle" class="music-toggle" type="button" aria-label="เปิด/ปิดเสียงดนตรี" title="เปิด/ปิดเสียง">🎵</button>
+
+<svg id="defs" aria-hidden="true">
+<defs>
+<pattern id="lines" width="24" height="17" patternUnits="userSpaceOnUse"><path d="M0,16 H24" stroke="#5f7fa8" stroke-width="1.1" opacity="0.45"/></pattern>
+<pattern id="bglines" width="40" height="34" patternUnits="userSpaceOnUse"><path d="M0,33 H40" stroke="#9fb6d3" stroke-width="1.6"/></pattern>
+<filter id="paper" x="-20%" y="-20%" width="150%" height="150%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="n"/>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="5" result="d"/>
+  <feDropShadow in="d" dx="8" dy="10" stdDeviation="5" flood-color="#3a3428" flood-opacity="0.32"/>
+</filter>
+<filter id="float" x="-30%" y="-30%" width="170%" height="170%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="5" result="n"/>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="5" result="d"/>
+  <feDropShadow in="d" dx="14" dy="18" stdDeviation="8" flood-color="#3a3428" flood-opacity="0.26"/>
+</filter>
+<filter id="lite" x="-20%" y="-20%" width="150%" height="150%">
+  <feDropShadow dx="7" dy="9" stdDeviation="4" flood-color="#2a2a40" flood-opacity="0.3"/>
+</filter>
+<filter id="blur8"><feGaussianBlur stdDeviation="8"/></filter>
+<radialGradient id="glow"><stop offset="0" stop-color="#ffd96b" stop-opacity="0.9"/><stop offset="0.4" stop-color="#ffc24d" stop-opacity="0.35"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+<radialGradient id="lanternLit" cx="50%" cy="75%" r="70%"><stop offset="0" stop-color="#fff1b8"/><stop offset="0.55" stop-color="#ffc46e"/><stop offset="1" stop-color="#ef9550"/></radialGradient>
+</defs>
+</svg>
+
+<!-- pick a krathong -->
+<section id="pick" aria-label="เลือกกระทง">
+  <div class="title paperbit">เลือกกระทงของเรา<small>แตะกระทงที่ชอบได้เลย</small></div>
+  <div class="cards" id="cards"></div>
+</section>
+
+<svg id="scene" xmlns="http://www.w3.org/2000/svg" aria-label="ฉากลอยกระทง"></svg>
+<canvas id="fw"></canvas>
+
+<div id="controls" class="hide">
+  <div class="hint paperbit" id="hint">จุดเทียนก่อนนะ</div>
+  <button class="btn paperbit orange" id="actBtn" type="button">จุดเทียน</button>
+</div>
+
+<div id="noteWrap" role="dialog" aria-modal="true" aria-labelledby="noteTitle">
+  <div class="note">
+    <div class="tape"></div>
+    <h2 id="noteTitle"></h2>
+    <div class="note-gallery" id="noteGallery">
+      <div class="polaroid-wrapper">
+        <button class="photo-nav prev" id="photoPrev" type="button" aria-label="รูปก่อนหน้า">‹</button>
+        <div class="polaroid" id="polaroidCard" title="แตะเพื่อดูรูปถัดไป">
+          <img id="currentPhoto" src="photo1.jpg" alt="รูปความทรงจำของเรา">
+          <div class="photo-caption" id="photoCaption">ความทรงจำ 1 / 3 💖 (แตะรูปเพื่อเปลี่ยน)</div>
+        </div>
+        <button class="photo-nav next" id="photoNext" type="button" aria-label="รูปถัดไป">›</button>
+      </div>
+      <div class="photo-dots" id="photoDots">
+        <button class="dot active" data-index="0" type="button" aria-label="รูปที่ 1"></button>
+        <button class="dot" data-index="1" type="button" aria-label="รูปที่ 2"></button>
+        <button class="dot" data-index="2" type="button" aria-label="รูปที่ 3"></button>
+      </div>
+    </div>
+    <div id="noteBody"></div>
+    <p class="sign" id="noteSign"></p>
+    <button class="btn paperbit pink again" id="againBtn" type="button">ลอยอีกครั้ง</button>
+  </div>
+</div>
+
+<script>
+/* ================= แก้ข้อความตรงนี้ได้เลย ================= */
+const CFG = {
+  firework1: ["รักนะมิ้ว"],
+  firework2: ["สุขสันต์วันครบรอบ", "6 เดือน"],
+  firework2Mobile: ["สุขสันต์", "วันครบรอบ", "6 เดือน"],
+  noteTitle: "ถึง มิ้ว 💌",
+  noteBody: [
+    "ครบ 6 เดือนแล้วนะ ขอบคุณที่อยู่ข้างกันมาตลอด",
+    "ทุกวันที่มีมิ้ว เป็นวันที่ดีที่สุดของเค้าเลย",
+    "ปีนี้ขอลอยเรื่องไม่ดีไปกับสายน้ำ",
+    "แล้วเก็บแต่ความสุขไว้กับเราสองคน",
+    "ปีหน้า ปีต่อไป ก็มาลอยกระทงด้วยกันอีกนะ",
+    "รักมิ้วที่สุดเลย ❤️"
+  ],
+  noteSign: "จากเค้าเอง"
+};
+/* ========================================================== */
+
+/* ---------------- Audio Control ---------------- */
+const bgMusic = $("bgMusic");
+const musicToggle = $("musicToggle");
+let musicStarted = false;
+
+function playMusic() {
+  if (!bgMusic) return;
+  bgMusic.play().then(() => {
+    musicStarted = true;
+    musicToggle.classList.remove("muted");
+  }).catch(() => {});
+}
+
+musicToggle.addEventListener("click", () => {
+  if (!bgMusic) return;
+  if (bgMusic.paused) {
+    bgMusic.play().then(() => {
+      musicStarted = true;
+      musicToggle.classList.remove("muted");
+      musicToggle.textContent = "🎵";
+    }).catch(() => {});
+  } else {
+    bgMusic.pause();
+    musicToggle.classList.add("muted");
+    musicToggle.textContent = "🔇";
+  }
+});
+
+const INK = "#34302c", PAPER = "#fffdf8";
+function $(id) { return document.getElementById(id); }
+let seed = 7;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+const R = (a, b) => a + Math.random() * (b - a);
+const f1 = n => Math.round(n * 10) / 10;
+
+function cut(parts, det = "", filt = "paper") {
+  let g = `<g filter="url(#${filt})">`;
+  for (const [geo] of parts) g += `<${geo} fill="${PAPER}" stroke="${PAPER}" stroke-width="15" stroke-linejoin="round"/>`;
+  for (const [geo, fill] of parts) {
+    g += `<${geo} fill="${fill}"/><${geo} fill="url(#lines)" opacity="0.5"/>`;
+    g += `<${geo} fill="none" stroke="${INK}" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  return g + det + "</g>";
+}
+const L = (d, w = 3, c = INK, extra = "") =>
+  `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
+const poly = pts => `polygon points="${pts.map(p => f1(p[0]) + "," + f1(p[1])).join(" ")}"`;
+const starPts = (cx, cy, r) => Array.from({length: 10}, (_, i) => {
+  const rr = i % 2 ? r * .45 : r, a = -Math.PI / 2 + i * Math.PI / 5;
+  return [cx + rr * Math.cos(a), cy + rr * Math.sin(a)];
+});
+
+/* ---------------- krathong art (local coords, base centred at 0,0) ---------------- */
+function face(y, sw = 3.4, col = INK) {
+  return L(`M-34,${y} q8,-9 16,0 M18,${y} q8,-9 16,0`, sw, col) + L(`M-7,${y + 7} q7,8 14,0`, sw, col) +
+    `<ellipse cx="-44" cy="${y + 9}" rx="9" ry="5" fill="#f2877a" opacity=".75"/>` +
+    `<ellipse cx="44" cy="${y + 9}" rx="9" ry="5" fill="#f2877a" opacity=".75"/>`;
+}
+function candleIncense(cx, top = 104) {
+  const parts = [[`rect x="${cx}" y="${-top}" width="13" height="${top - 20}" rx="4"`, "#fbf1d2"]];
+  let det = "";
+  for (const dx of [-46, -39, -32]) det += L(`M${dx},-24 L${dx - 6},${-(top + 12)}`, 3.4, "#c0624a");
+  det += L(`M-50,${-(top + 18)} q-8,-12 2,-24 q8,-10 -2,-22 q-8,-10 2,-20`, 1.8, "#8a8a8a");
+  return {parts, det, flame: [cx + 6.5, -top]};
+}
+function marigold(x, y, r) {
+  let s = `<circle cx="${x}" cy="${y}" r="${r}" fill="#f29c3c" stroke="${INK}" stroke-width="2.4"/>`;
+  for (let k = 0; k < 6; k++) s += L(`M${f1(x + r * .4 * Math.cos(k * 1.05))},${f1(y + r * .4 * Math.sin(k * 1.05))} l${f1(r * .45 * Math.cos(k * 1.05))},${f1(r * .45 * Math.sin(k * 1.05))}`, 1.8, "#c25a24");
+  return s + `<circle cx="${x}" cy="${y}" r="${r * .3}" fill="#e0703a"/>`;
+}
+function orchid(x, y, r, col) {
+  let s = "";
+  for (let k = 0; k < 5; k++) {
+    const a = -Math.PI / 2 + k * 2 * Math.PI / 5, px = f1(x + r * .75 * Math.cos(a)), py = f1(y + r * .75 * Math.sin(a));
+    s += `<ellipse cx="${px}" cy="${py}" rx="${r * .55}" ry="${r * .38}" transform="rotate(${Math.round(a * 180 / Math.PI)} ${px} ${py})" fill="${col}" stroke="${INK}" stroke-width="2.2"/>`;
+  }
+  return s + `<circle cx="${x}" cy="${y}" r="${r * .32}" fill="#f6e07a" stroke="${INK}" stroke-width="2"/>`;
+}
+
+function krBanana() {
+  const parts = [
+    [`path d="M-82,-10 L-78,42 Q0,72 78,42 L82,-10 Z"`, "#86b46a"],
+    [`ellipse cx="0" cy="-10" rx="82" ry="20"`, "#9cc77d"]];
+  let det = "";
+  for (let i = 0; i < 11; i++) {
+    const a = Math.PI * i / 10, px = f1(-72 * Math.cos(a)), py = f1(-12 - 10 * Math.sin(a));
+    parts.push([`path d="M${px - 12},${py} Q${px - 6},${py - 30} ${px},${py - 48} Q${px + 6},${py - 30} ${px + 12},${py} Z"`, "#b3dc95"]);
+    det += L(`M${px},${f1(py - 40)} L${px},${f1(py - 4)}`, 1.8, "#4d7a40");
+  }
+  parts.push([`path d="M-26,-18 Q-28,-66 0,-86 Q28,-66 26,-18 Z"`, "#f4a3b5"]);
+  det += L("M0,-82 L0,-22 M-13,-64 Q-6,-40 -4,-20 M13,-64 Q6,-40 4,-20", 2.2, "#b25670");
+  const c = candleIncense(34); parts.push(...c.parts);
+  const front = []; let det2 = "";
+  for (let i = 0; i < 8; i++) {
+    const px = f1(-66 + i * 132 / 7), py = f1(4 + 6 * Math.sin(Math.PI * i / 7));
+    front.push([`path d="M${px - 11},${py} Q${px - 5},${py - 18} ${px},${py - 30} Q${px + 5},${py - 18} ${px + 11},${py} Z"`, "#a6d488"]);
+    det2 += L(`M${px},${f1(py - 24)} v18`, 1.6, "#4d7a40");
+  }
+  for (const [x, y] of [[-54, -20], [-30, -12], [56, -20], [70, -6], [-70, -6]]) det2 += marigold(x, y, 10);
+  det2 += face(32);
+  return {parts, det: det + c.det, front, det2, flame: c.flame};
+}
+function krBread() {
+  seed = 11;
+  const parts = [
+    [`path d="M-84,-10 L-80,42 Q0,74 80,42 L84,-10 Z"`, "#dc9a4e"],
+    [`ellipse cx="0" cy="-10" rx="84" ry="22"`, "#f2c682"]];
+  let det = "";
+  for (let i = 0; i < 9; i++) {
+    const a = Math.PI * i / 8, px = f1(-70 * Math.cos(a)), py = f1(-14 - 10 * Math.sin(a));
+    parts.push([`ellipse cx="${px}" cy="${f1(py - 14)}" rx="15" ry="22"`, "#e8ad60"]);
+    det += L(`M${f1(px - 5)},${f1(py - 24)} q5,-6 10,0`, 2, "#b8722f");
+  }
+  for (let k = 0; k < 6; k++) {
+    const a = Math.PI + k * Math.PI / 5;
+    parts.push([`ellipse cx="${f1(30 * Math.cos(a))}" cy="${f1(-34 + 14 * Math.sin(a))}" rx="17" ry="13"`, "#f0bd72"]);
+  }
+  parts.push([`circle cx="0" cy="-42" r="18"`, "#e5a35a"]);
+  for (let k = 0; k < 10; k++) det += `<ellipse cx="${f1(rnd() * 24 - 12)}" cy="${f1(-42 + rnd() * 22 - 11)}" rx="2.2" ry="1.3" fill="#fff6dc" stroke="${INK}" stroke-width="1"/>`;
+  const c = candleIncense(40); parts.push(...c.parts);
+  const front = []; let det2 = "";
+  const cols = ["#f4a3b5", "#a6d488", "#f6e07a", "#9fc9ea", "#f4a3b5", "#a6d488", "#f6e07a"];
+  for (let i = 0; i < 7; i++) {
+    const px = f1(-62 + i * 124 / 6), py = f1(4 + 6 * Math.sin(Math.PI * i / 6));
+    front.push([`ellipse cx="${px}" cy="${f1(py - 10)}" rx="13" ry="15"`, "#e9a95b"]);
+    for (let k = 0; k < 5; k++) det2 += `<circle cx="${f1(px + 5 * Math.cos(k * 1.256))}" cy="${f1(py - 10 + 5 * Math.sin(k * 1.256))}" r="3.6" fill="${cols[i]}" stroke="${INK}" stroke-width="1.6"/>`;
+    det2 += `<circle cx="${px}" cy="${f1(py - 10)}" r="2.4" fill="#fff6dc" stroke="${INK}" stroke-width="1.4"/>`;
+  }
+  for (const dx of [-66, -50, 48, 62]) det2 += L(`M${dx},30 l8,-10`, 2.4, "#b8722f");
+  det2 += face(34);
+  return {parts, det: det + c.det, front, det2, flame: c.flame};
+}
+function krCoconut() {
+  seed = 4;
+  const parts = [
+    [`path d="M-84,-10 Q-88,58 0,64 Q88,58 84,-10 Z"`, "#8b5a3a"],
+    [`ellipse cx="0" cy="-10" rx="84" ry="22"`, "#f4ecdb"],
+    [`ellipse cx="0" cy="-12" rx="72" ry="16"`, "#7fae63"]];
+  let det = "";
+  for (let i = 0; i < 9; i++) {
+    const a = Math.PI * i / 8, px = f1(-64 * Math.cos(a)), py = f1(-14 - 8 * Math.sin(a));
+    parts.push([`path d="M${px - 11},${py} Q${px - 4},${py - 26} ${px},${py - 40} Q${px + 4},${py - 26} ${px + 11},${py} Z"`, "#9fd086"]);
+    det += L(`M${px},${f1(py - 34)} L${px},${f1(py - 3)}`, 1.6, "#4d7a40");
+  }
+  const c = candleIncense(26, 100); parts.push(...c.parts);
+  let fl = "";
+  for (const [x, y, r, col] of [[-44, -36, 15, "#b986d0"], [2, -44, 17, "#c99ae0"], [-14, -20, 13, "#ffffff"], [52, -22, 13, "#b986d0"]]) fl += orchid(x, y, r, col);
+  fl += marigold(-62, -14, 10) + marigold(68, -12, 10) + marigold(20, -8, 9);
+  let det2 = "";
+  for (let i = 0; i < 46; i++) {
+    const t = .08 + rnd() * .84, px = -84 + 168 * t, top = 2 + 12 * Math.sin(Math.PI * t), bot = -10 + 74 * Math.sin(Math.PI * t);
+    const py = top + 6 + rnd() * Math.max(2, bot - top - 12);
+    det2 += L(`M${f1(px)},${f1(py)} l${f1(rnd() * 6 - 3)},${f1(6 + rnd() * 5)}`, 1.8, "#a8714b");
+  }
+  for (let i = 0; i < 14; i++) det2 += `<circle cx="${f1(-74 + i * 148 / 13)}" cy="${f1(8 + 14 * Math.sin(Math.PI * i / 13))}" r="5.4" fill="#fffdf2" stroke="${INK}" stroke-width="1.8"/>`;
+  det2 += `<circle cx="0" cy="28" r="8" fill="#e0705a" stroke="${INK}" stroke-width="2"/>`;
+  det2 += face(40, 3.6, "#2a1d14");
+  return {parts, det: det + c.det + fl, front: [], det2, flame: c.flame};
+}
+const KR = {bread: krBread, banana: krBanana, coconut: krCoconut};
+const KR_NAMES = {bread: "กระทงขนมปัง", banana: "กระทงใบตอง", coconut: "กระทงกะลามะพร้าว"};
+const artCache = {};
+function krathongArt(type, filt) {
+  const key = type + filt;
+  if (artCache[key]) return artCache[key];
+  const k = KR[type]();
+  const [fx, fy] = k.flame;
+  let s = cut(k.parts, k.det, filt);
+  s += k.front.length ? cut(k.front, k.det2, filt) : `<g filter="url(#${filt})">${k.det2}</g>`;
+  s += `<g class="flame" transform="translate(${fx},${fy})"><path d="M0,0 v-6" stroke="${INK}" stroke-width="2"/>` +
+       `<g class="flick"><path d="M0,-38 Q14,-14 0,-4 Q-14,-14 0,-38 Z" fill="#ffc94d" stroke="${INK}" stroke-width="3"/>` +
+       `<path d="M0,-24 Q6,-12 0,-7 Q-6,-12 0,-24 Z" fill="#f2733c"/></g></g>`;
+  return (artCache[key] = {svg: s, flame: [fx, fy - 20]});
+}
+
+/* ---------------- pick screen ---------------- */
+const cardsEl = $("cards");
+for (const type of ["bread", "banana", "coconut"]) {
+  const b = document.createElement("button");
+  b.className = "card"; b.type = "button";
+  b.innerHTML = `<svg viewBox="-115 -175 230 265" aria-hidden="true">
+    <ellipse cx="8" cy="70" rx="95" ry="12" fill="#3a3428" opacity=".18" filter="url(#blur8)"/>${krathongArt(type, "paper").svg}</svg>
+    <span class="name paperbit">${KR_NAMES[type]}</span>`;
+  b.addEventListener("click", () => {
+    playMusic();
+    choose(type);
+  });
+  cardsEl.appendChild(b);
+}
+
+/* ---------------- scene building ---------------- */
+const svg = $("scene");
+let W = 1000, H = 1000, hy = 560, vk = 1, s0 = 1;
+
+function village() {
+  let s = "";
+  const contact = (cx, cy, rx) => `<ellipse cx="${cx + 10}" cy="${cy + 4}" rx="${rx}" ry="${rx * .12 + 4}" fill="#3a3428" opacity=".22" filter="url(#blur8)"/>`;
+  // spirit house
+  const sx = 85;
+  s += contact(sx, 762, 40) + cut([
+    [`rect x="${sx - 9}" y="660" width="18" height="102"`, "#d9c09a"],
+    [`rect x="${sx - 45}" y="652" width="90" height="12"`, "#d9c09a"],
+    [`rect x="${sx - 33}" y="595" width="66" height="58"`, "#f3ead6"],
+    [`path d="M${sx - 48},600 L${sx},540 L${sx + 48},600 Z"`, "#e07a5a"],
+    [`path d="M${sx - 30},598 L${sx},562 L${sx + 30},598 Z"`, "#e8c066"]],
+    `<rect x="${sx - 11}" y="615" width="22" height="38" rx="9" fill="#c9584a" stroke="${INK}" stroke-width="2.4"/>` +
+    L(`M${sx},540 q-2,-14 10,-20 M${sx - 48},600 q-12,-2 -12,-14 M${sx + 48},600 q12,-2 12,-14`, 2.6) +
+    Array.from({length: 8}, (_, i) => `<circle cx="${sx - 38 + i * 11}" cy="${668 + (i % 2 ? 4 : 0)}" r="4.5" fill="#f2a24a" stroke="${INK}" stroke-width="1.6"/>`).join(""));
+  // chedi
+  const c = 212, b = 762;
+  s += contact(c, b, 60) + cut([
+    [`rect x="${c - 50}" y="${b - 42}" width="100" height="42"`, "#e8c066"],
+    [`rect x="${c - 40}" y="${b - 70}" width="80" height="28"`, "#e8c066"],
+    [`path d="M${c - 36},${b - 70} C${c - 36},${b - 140} ${c - 10},${b - 150} ${c},${b - 162} C${c + 10},${b - 150} ${c + 36},${b - 140} ${c + 36},${b - 70} Z"`, "#f0cd73"],
+    [`path d="M${c - 10},${b - 158} L${c},${b - 330} L${c + 10},${b - 158} Z"`, "#e8c066"]],
+    Array.from({length: 5}, (_, k) => L(`M${c - 8 + k * 1.6},${b - 175 - k * 24} L${c + 8 - k * 1.6},${b - 175 - k * 24}`, 2)).join("") +
+    L(`M${c - 30},${b - 100} Q${c},${b - 90} ${c + 30},${b - 100}`, 2) +
+    `<circle cx="${c}" cy="${b - 336}" r="6" fill="#f7d56e" stroke="${INK}" stroke-width="2"/>`);
+  // temple
+  const t = 410;
+  let tiles = "";
+  for (let i = 0; i < 11; i++) tiles += L(`M${t - 150 + i * 30},622 L${t - 120 + i * 22},582`, 1.6, "#9e4a36");
+  for (let i = 0; i < 10; i++) tiles += L(`M${t - 120 + i * 26},556 L${t - 95 + i * 19},512`, 1.6, "#9e4a36");
+  let tdet = tiles;
+  for (const dx of [-118, -62, 49, 105]) tdet += `<rect x="${t + dx}" y="${b - 158}" width="13" height="132" fill="#e8c066" stroke="${INK}" stroke-width="2.4"/>`;
+  tdet += `<path d="M${t - 28},${b - 28} V${b - 100} Q${t},${b - 132} ${t + 28},${b - 100} V${b - 28} Z" fill="#c9584a" stroke="${INK}" stroke-width="3"/>` + L(`M${t},${b - 120} V${b - 28}`, 2);
+  tdet += `<path d="M${t - 40},${b - 28} V${b - 104} Q${t},${b - 146} ${t + 40},${b - 104} V${b - 28}" fill="none" stroke="#e8c066" stroke-width="5"/>`;
+  for (const dx of [-88, 88]) tdet += `<path d="M${t + dx - 14},${b - 62} V${b - 100} Q${t + dx},${b - 116} ${t + dx + 14},${b - 100} V${b - 62} Z" fill="#7aa3b8" stroke="${INK}" stroke-width="2.4"/>`;
+  tdet += `<circle cx="${t}" cy="522" r="20" fill="#e8c066" stroke="${INK}" stroke-width="2.4"/>`;
+  for (let k = 0; k < 8; k++) tdet += L(`M${t},522 L${f1(t + 30 * Math.cos(k * Math.PI / 4))},${f1(522 + 30 * Math.sin(k * Math.PI / 4))}`, 2);
+  tdet += L(`M${t},364 q-6,-26 14,-40 q10,-6 6,8`, 4) + L(`M${t - 112},592 q-28,4 -30,-22 q4,-14 14,-4`, 4) + L(`M${t + 112},592 q28,4 30,-22 q-4,-14 -14,-4`, 4);
+  tdet += L(`M${t - 172},630 q-18,-6 -14,-24 M${t + 172},630 q18,-6 14,-24 M${t - 140},562 q-16,-6 -12,-22 M${t + 140},562 q16,-6 12,-22`, 3.4);
+  for (let k = 0; k < 3; k++) tdet += `<rect x="${t - 46 + k * 8}" y="${b - 28 + k * 10}" width="${92 - k * 16}" height="10" fill="#efe1c4" stroke="${INK}" stroke-width="2.2"/>`;
+  s += contact(t, b, 170) + cut([
+    [`rect x="${t - 150}" y="${b - 28}" width="300" height="28"`, "#efe1c4"],
+    [`rect x="${t - 125}" y="${b - 160}" width="250" height="134"`, "#f4ecd9"],
+    [poly([[t - 172, 630], [t - 108, 576], [t + 108, 576], [t + 172, 630]]), "#e07a5a"],
+    [poly([[t - 172, 630], [t + 172, 630], [t + 168, 640], [t - 168, 640]]), "#5f9a7d"],
+    [poly([[t - 140, 562], [t - 88, 508], [t + 88, 508], [t + 140, 562]]), "#e07a5a"],
+    [poly([[t - 140, 562], [t + 140, 562], [t + 136, 571], [t - 136, 571]]), "#5f9a7d"],
+    [poly([[t - 112, 592], [t + 112, 592], [t, 362]]), "#e8c066"],
+    [poly([[t - 94, 584], [t + 94, 584], [t, 394]]), "#d6684d"],
+    [poly([[t - 64, 576], [t + 64, 576], [t, 448]]), "#f0cd73"]], tdet);
+  // banana tree
+  const bx = 820, bb = 765;
+  const parts = [[`path d="M${bx - 20},${bb} Q${bx - 14},${bb - 110} ${bx - 12},${bb - 200} L${bx + 12},${bb - 200} Q${bx + 14},${bb - 110} ${bx + 20},${bb} Z"`, "#8bb873"]];
+  let veins = L(`M${bx - 6},${bb - 190} Q${bx - 4},${bb - 100} ${bx - 8},${bb - 4} M${bx + 6},${bb - 190} Q${bx + 5},${bb - 100} ${bx + 8},${bb - 4}`, 1.6, "#4d7a40");
+  const leaf = (x1, y1, x2, y2, bend) => {
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2; let nx = -(y2 - y1), ny = x2 - x1; const n = Math.hypot(nx, ny); nx /= n; ny /= n;
+    const p1 = [mx + nx * (38 + bend), my + ny * (38 + bend)], p2 = [mx - nx * (30 - bend), my - ny * (30 - bend)];
+    parts.push([`path d="M${x1},${y1} Q${f1(p1[0])},${f1(p1[1])} ${x2},${y2} Q${f1(p2[0])},${f1(p2[1])} ${x1},${y1} Z"`, "#9fd086"]);
+    veins += L(`M${x1},${y1} Q${f1(mx + nx * bend * .5)},${f1(my + ny * bend * .5)} ${x2},${y2}`, 2.2);
+    for (let k = 1; k < 6; k++) {
+      const tt = k / 6, px = x1 + (x2 - x1) * tt + nx * bend * .5 * Math.sin(Math.PI * tt), py = y1 + (y2 - y1) * tt + ny * bend * .5 * Math.sin(Math.PI * tt);
+      veins += L(`M${f1(px)},${f1(py)} l${f1(nx * 22)},${f1(ny * 22)} M${f1(px)},${f1(py)} l${f1(-nx * 18)},${f1(-ny * 18)}`, 1.4, "#4d7a40");
+    }
+  };
+  leaf(bx, bb - 200, bx - 150, bb - 330, 12); leaf(bx, bb - 200, bx + 160, bb - 320, -14);
+  leaf(bx, bb - 200, bx - 160, bb - 210, -16); leaf(bx, bb - 200, bx + 170, bb - 205, 14); leaf(bx, bb - 200, bx + 10, bb - 370, 10);
+  parts.push([`path d="M${bx + 18},${bb - 190} q24,30 18,64 q-22,-10 -26,-44 Z"`, "#b85a7a"]);
+  s += contact(bx, bb, 55) + cut(parts, veins);
+  // string of lanterns
+  const x0 = t + 172, y0 = 628, x2 = bx - 120, y2 = bb - 235, cxq = (x0 + x2) / 2, cyq = 700;
+  let str = L(`M${x0},${y0} Q${cxq},${cyq} ${x2},${y2}`, 2.4);
+  const cols = ["#e0705a", "#f2a65a", "#f5d77e", "#e0705a", "#f2a65a"];
+  for (let k = 1; k < 6; k++) {
+    const tt = k / 6, px = f1((1 - tt) ** 2 * x0 + 2 * (1 - tt) * tt * cxq + tt * tt * x2), py = f1((1 - tt) ** 2 * y0 + 2 * (1 - tt) * tt * cyq + tt * tt * y2);
+    str += L(`M${px},${py} v10`, 2) + `<ellipse cx="${px}" cy="${py + 24}" rx="13" ry="16" fill="${PAPER}" stroke="${PAPER}" stroke-width="10"/>` +
+      `<ellipse cx="${px}" cy="${py + 24}" rx="13" ry="16" fill="${cols[k - 1]}" stroke="${INK}" stroke-width="2.4"/>` + L(`M${px},${py + 8} v32 M${px - 6},${py + 40} h12`, 1.6);
+  }
+  s += `<g filter="url(#paper)">${str}</g>`;
+  return s;
+}
+
+function getPlayerRestPos() {
+  const portrait = innerHeight > innerWidth;
+  const x = portrait ? W / 2 : W * 0.42;
+  const wy = hy + 22;
+  const waterH = H - wy;
+  // Position krathong comfortably in the water, above the bottom button
+  const y = portrait ? H - Math.min(waterH * 0.32, 480) : H - waterH * 0.32;
+  return {x, y, s: s0};
+}
+
+function buildStatic() {
+  const vw = innerWidth, vh = innerHeight;
+  W = 1000; H = Math.round(W * vh / vw);
+  const portrait = vh > vw;
+  hy = Math.round(H * (portrait ? .5 : .56));
+  vk = Math.min(1, Math.max(.45, hy / 640));
+  s0 = Math.min(1.7, Math.max(.75, (H - hy) / 300));
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
+
+  let s = `<rect width="${W}" height="${H}" fill="#f8f6f0"/><rect width="${W}" height="${H}" fill="url(#bglines)"/>`;
+  for (const x of [W * .1, W * .9]) s += `<path d="M${x},0 V${H}" stroke="#e8a0a0" stroke-width="2"/>`;
+  // sky
+  seed = 21;
+  const my = Math.max(80, Math.min(300, hy * .24)), mx = W - 150;
+  s += `<g id="sky">`;
+  s += cut([[`circle cx="${mx}" cy="${my}" r="58"`, "#f5d77e"]],
+    L(`M${mx - 26},${my - 4} q8,8 16,0 M${mx + 10},${my - 4} q8,8 16,0`, 3) + L(`M${mx - 8},${my + 14} q8,8 16,0`, 3) +
+    `<ellipse cx="${mx - 36}" cy="${my + 12}" rx="9" ry="5" fill="#f29a8a" opacity=".7"/><ellipse cx="${mx + 36}" cy="${my + 12}" rx="9" ry="5" fill="#f29a8a" opacity=".7"/>` +
+    `<circle cx="${mx + 26}" cy="${my - 32}" r="8" fill="#e9c467" stroke="${INK}" stroke-width="2"/>`, "float");
+  const cx0 = 190, cy0 = my;
+  const cloud = `M${cx0 - 90},${cy0 + 30} q-30,-40 15,-55 q5,-40 50,-35 q25,-30 60,-5 q40,-15 55,25 q40,10 20,50 q5,30 -35,30 q-30,25 -65,5 q-40,20 -65,-5 q-40,5 -35,-10 Z`;
+  s += cut([[`path d="${cloud}" transform="translate(${cx0} ${cy0}) scale(.8) translate(${-cx0} ${-cy0})"`, "#ffffff"]],
+    `<circle cx="${cx0 - 20}" cy="${cy0 + 6}" r="3.5" fill="${INK}"/><circle cx="${cx0 + 24}" cy="${cy0 + 6}" r="3.5" fill="${INK}"/>` + L(`M${cx0 - 10},${cy0 + 18} q12,11 24,0`, 2.6), "float");
+  const starTop = 40, starBot = Math.max(starTop + 40, hy - 380 * vk);
+  for (let i = 0; i < (portrait ? 12 : 8); i++) {
+    const x = 60 + rnd() * (W - 120), y = starTop + rnd() * (starBot - starTop);
+    if (Math.hypot(x - mx, y - my) < 110 || Math.hypot(x - cx0, y - cy0) < 130) continue;
+    s += cut([[poly(starPts(x, y, 9 + rnd() * 9)), "#f7d56e"]], "", "float");
+  }
+  s += `</g>`;
+  // bank + village
+  s += cut([[`rect x="-20" y="${hy - 12}" width="${W + 40}" height="40"`, "#a9cc98"]]);
+  const tx = (W - 1000 * vk) / 2;
+  s += `<g transform="translate(${f1(tx)} ${hy}) scale(${vk}) translate(0 -762)">${village()}</g>`;
+  // water
+  const wy = hy + 22;
+  s += cut([[`rect x="-20" y="${wy}" width="${W + 40}" height="${H - wy + 20}"`, "#a8cae6"]]);
+  let wa = "", wb = "";
+  seed = 5;
+  for (let y = wy + 24, i = 0; y < H; i++) {
+    const d = (y - wy) / Math.max(1, H - wy), sc = .45 + d * 1.2;
+    for (let x = rnd() * 120; x < W; x += (160 + rnd() * 200) * sc) {
+      const p = L(`M${f1(x)},${f1(y)} q${f1(14 * sc)},${f1(-8 * sc)} ${f1(28 * sc)},0 q${f1(14 * sc)},${f1(8 * sc)} ${f1(28 * sc)},0`, 2.2 + d * 1.6, "#ffffff");
+      if (i % 2) wa += p; else wb += p;
+    }
+    y += 26 + 70 * d;
+  }
+  s += `<g class="waves">${wa}</g><g class="waves b">${wb}</g>`;
+  s += `<g id="npcLayer"></g><g id="playerLayer"></g>`;
+  s += `<rect id="night" x="0" y="0" width="${W}" height="${H}" fill="#1b2050" opacity="${state.night ? .6 : 0}" style="mix-blend-mode:multiply"/>`;
+  s += `<g id="glows"><circle id="moonGlow" cx="${mx}" cy="${my}" r="150" fill="url(#glow)" opacity="${state.night ? .8 : 0}" style="transition:opacity 5s"/></g><g id="lanternLayer"></g>`;
+  // keep dynamic children across rebuilds
+  const keep = {
+    npc: $("npcLayer") ? [...$("npcLayer").childNodes] : [],
+    pl: $("playerLayer") ? [...$("playerLayer").childNodes] : [],
+    gl: $("glows") ? [...$("glows").childNodes].filter(n => n.id !== "moonGlow") : [],
+    ln: $("lanternLayer") ? [...$("lanternLayer").childNodes] : []
+  };
+  svg.innerHTML = s;
+  keep.npc.forEach(n => $("npcLayer").appendChild(n));
+  keep.pl.forEach(n => $("playerLayer").appendChild(n));
+  keep.gl.forEach(n => $("glows").appendChild(n));
+  keep.ln.forEach(n => $("lanternLayer").appendChild(n));
+
+  // Keep player krathong correctly positioned in the water on screen resize or view toggle
+  if (player && !player.floating) {
+    const pos = getPlayerRestPos();
+    player.x = pos.x;
+    player.y = pos.y;
+    player.s = pos.s;
+    place(player, player.x, player.y, player.s);
+  }
+  npcs.forEach(n => {
+    if (n.y < hy + 20) {
+      n.g.remove();
+      n.glow.remove();
+    }
+  });
+  npcs = npcs.filter(n => n.y >= hy + 20);
+
+  resizeCanvas();
+}
+
+/* ---------------- state & actors ---------------- */
+const NS = "http://www.w3.org/2000/svg";
+const state = {type: null, phase: "pick", night: false, timers: []};
+let player = null, npcs = [], lanterns = [];
+
+function mk(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent && parent.appendChild(e);
+  return e;
+}
+function makeKrathong(type, layer, lit) {
+  const g = mk("g", {}, layer);
+  const art = krathongArt(type, "lite");
+  g.innerHTML = `<ellipse cx="8" cy="58" rx="96" ry="14" fill="#2f4a66" opacity=".25"/>` + art.svg;
+  if (lit) g.classList.add("lit");
+  const glow = mk("circle", {r: 160, fill: "url(#glow)", opacity: lit ? 1 : 0}, $("glows"));
+  glow.style.transition = "opacity .8s";
+  return {g, glow, flame: art.flame};
+}
+function place(k, x, y, s, rot = 0) {
+  k.g.setAttribute("transform", `translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)}) scale(${s.toFixed(3)})`);
+  k.glow.setAttribute("cx", f1(x + k.flame[0] * s));
+  k.glow.setAttribute("cy", f1(y + k.flame[1] * s));
+  k.glow.setAttribute("r", f1(170 * s));
+}
+
+function choose(type) {
+  state.type = type;
+  $("pick").classList.add("gone");
+  state.phase = "scene";
+  const k = makeKrathong(type, $("playerLayer"), false);
+  const pos = getPlayerRestPos();
+  player = {...k, x: pos.x, y: pos.y, s: pos.s, t: 0, floating: false};
+  place(player, player.x, player.y, player.s);
+  setTimeout(() => { $("controls").classList.remove("hide"); $("actBtn").focus({preventScroll: true}); }, 700);
+}
+
+const btn = $("actBtn"), hint = $("hint");
+btn.addEventListener("click", () => {
+  playMusic();
+  if (state.phase === "scene") {
+    state.phase = "lit";
+    player.g.classList.add("lit");
+    player.glow.setAttribute("opacity", 1);
+    btn.textContent = "ลอยกระทง"; btn.classList.replace("orange", "pink");
+    hint.textContent = "อธิษฐานในใจแล้วกดลอยเลย";
+  } else if (state.phase === "lit") {
+    state.phase = "floating";
+    $("controls").classList.add("hide");
+    startShow();
+  }
+});
+
+function later(ms, fn) { state.timers.push(setTimeout(fn, ms)); }
+function startShow() {
+  player.floating = true; player.t = 0;
+  player.from = [player.x, player.y, player.s];
+  const portrait = innerHeight > innerWidth;
+  player.to = [portrait ? W * 0.58 : W * 0.5 + 130, hy + 34 + (H - hy) * 0.08, s0 * 0.22];
+  later(600, () => { state.night = true; $("night").setAttribute("opacity", .6); $("moonGlow").setAttribute("opacity", .8); });
+  later(1600, () => { spawnNPC(); state.npcTimer = setInterval(spawnNPC, 1300); });
+  later(3200, () => { spawnLantern(); state.lanTimer = setInterval(spawnLantern, 900); });
+  later(6000, () => { randomFirework(); state.fwTimer = setInterval(randomFirework, 1100); });
+  later(9500, () => textFirework(CFG.firework1));
+  later(18000, () => textFirework(CFG.firework2, CFG.firework2Mobile));
+  later(27500, () => {
+    clearInterval(state.fwTimer); state.fwTimer = setInterval(randomFirework, 2600);
+    $("noteWrap").classList.add("show"); $("againBtn").focus({preventScroll: true});
+  });
+}
+
+function spawnNPC() {
+  if (npcs.length > 14) return;
+  const types = ["bread", "banana", "coconut"];
+  const d = Math.random();
+  const y = hy + 40 + Math.pow(d, 1.3) * (H - hy - 120);
+  const s = s0 * (.16 + .42 * d);
+  const dir = Math.random() < .5 ? 1 : -1;
+  const k = makeKrathong(types[Math.floor(Math.random() * 3)], $("npcLayer"), true);
+  const n = {...k, x: dir > 0 ? -120 : W + 120, y, s, vx: dir * (14 + 40 * d), ph: Math.random() * 6};
+  const layer = $("npcLayer"); const after = [...layer.children].find(c => +c.dataset.y > y);
+  k.g.dataset.y = y; if (after) layer.insertBefore(k.g, after);
+  npcs.push(n); place(n, n.x, n.y, n.s);
+}
+function spawnLantern() {
+  if (lanterns.length > 26) return;
+  const s = (.35 + Math.random() * .55) * Math.max(.7, vk);
+  const g = mk("g", {}, $("lanternLayer"));
+  g.innerHTML = `<circle cx="0" cy="30" r="80" fill="url(#glow)"/>` +
+    `<path d="M-34,-40 Q0,-58 34,-40 L24,38 Q0,46 -24,38 Z" fill="${PAPER}" stroke="${PAPER}" stroke-width="12" stroke-linejoin="round"/>` +
+    `<path d="M-34,-40 Q0,-58 34,-40 L24,38 Q0,46 -24,38 Z" fill="url(#lanternLit)" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+    L("M-12,-49 L-8,42 M12,-49 L8,42", 1.8, "#b8642f") +
+    `<path d="M0,38 q8,10 0,20 q-8,-10 0,-20Z" fill="#ffd35c" stroke="${INK}" stroke-width="2"/>`;
+  lanterns.push({g, x: 40 + Math.random() * (W - 80), y: hy - Math.random() * 60, s, vy: -(22 + Math.random() * 26), ph: Math.random() * 6, sw: 10 + Math.random() * 20});
+}
+
+/* ---------------- fireworks (canvas) ---------------- */
+const cv = $("fw"), ctx = cv.getContext("2d");
+let cw = 0, ch = 0, dpr = 1, parts = [], rockets = [];
+function resizeCanvas() {
+  dpr = Math.min(2, devicePixelRatio || 1);
+  cw = innerWidth; ch = innerHeight;
+  cv.width = cw * dpr; cv.height = ch * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+const PAL = ["#ffd36e", "#ff9ec0", "#ffb35c", "#fff3c4", "#ff7a9a", "#ffe08a"];
+const svgToScreen = (x, y) => {
+  const sc = cw / W; return [x * sc, y * sc + (ch - H * sc) / 2];
+};
+function rocket(x1, y1, dur, onBoom, x0) {
+  rockets.push({x0: x0 ?? x1 + R(-60, 60), y0: ch + 10, x1, y1, t: 0, dur, onBoom});
+}
+function burst(x, y, n, col) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = R(60, 260);
+    parts.push({x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: R(1, 1.8), col: col || PAL[i % PAL.length], size: R(1.4, 2.6), mode: "free"});
+  }
+}
+function randomFirework() {
+  const [, hyS] = svgToScreen(0, hy);
+  const x = R(cw * .12, cw * .88), y = R(ch * .08, Math.max(ch * .12, hyS * .7));
+  const col = PAL[Math.floor(Math.random() * PAL.length)];
+  rocket(x, y, R(.8, 1.1), () => burst(x, y, 70, col));
+}
+function textPoints(lines, cx, cy, maxW, maxH) {
+  const oc = document.createElement("canvas"), o = oc.getContext("2d");
+  const fam = '"Mali","Itim","Sarabun","Leelawadee UI","Thonburi",sans-serif';
+  const isMob = cw < 560;
+  const fw = isMob ? "600" : "700";
+  o.font = `${fw} 100px ${fam}`;
+  const widest = Math.max(...lines.map(l => o.measureText(l).width));
+  const fs = Math.min(isMob ? 78 : 130, maxW / widest * 100, maxH / (lines.length * 1.35));
+  const lh = fs * 1.35;
+  const padX = Math.ceil(fs * 0.6) + 40;
+  const padY = Math.ceil(fs * 1.0) + 50; // extra vertical headroom for stacked Thai tone marks (e.g. ไม้โท บน สระอิ)
+  const textW = Math.ceil(widest / 100 * fs);
+  const textH = Math.ceil(lh * lines.length);
+  const bw = textW + padX * 2;
+  const bh = textH + padY * 2;
+  oc.width = bw; oc.height = bh;
+  o.font = `${fw} ${fs}px ${fam}`; o.textAlign = "center"; o.textBaseline = "middle"; o.fillStyle = "#fff";
+  lines.forEach((l, i) => o.fillText(l, bw / 2, padY + lh * (i + .5)));
+  const data = o.getImageData(0, 0, bw, bh).data;
+  const maxPts = isMob ? 1100 : 2000;
+  let gap = Math.max(3, Math.round(fs / 12)), pts;
+  do {
+    pts = [];
+    for (let y = 0; y < bh; y += gap) for (let x = 0; x < bw; x += gap)
+      if (data[(y * bw + x) * 4 + 3] > 140) pts.push([cx - textW / 2 + (x - padX) + R(-.4, .4), cy - textH / 2 + (y - padY) + R(-.4, .4)]);
+    gap++;
+  } while (pts.length > maxPts);
+  return {pts, fs, bw: textW};
+}
+function textFirework(lines, mobileLines) {
+  const [, hyS] = svgToScreen(0, hy);
+  const isMobile = cw < 560 || ch > cw;
+  if (isMobile && mobileLines) lines = mobileLines;
+  const maxW = cw * (isMobile ? 0.88 : 0.84);
+  const maxH = isMobile ? ch * 0.36 : ch * 0.28;
+  const cy = Math.max(ch * 0.22, Math.min(hyS * 0.44, ch * 0.32));
+  const tp = textPoints(lines, cw / 2, cy, maxW, maxH);
+  const n = 3, origins = Array.from({length: n}, (_, i) => [cw / 2 + (i - 1) * tp.bw / 3, cy + R(-20, 20)]);
+  origins.forEach(([ox, oy], i) => {
+    const mine = tp.pts.filter(p => Math.abs(p[0] - ox) <= tp.bw / 6 + 1 || (i === 0 && p[0] < ox) || (i === n - 1 && p[0] > ox));
+    rocket(ox, oy, .9 + i * .12, () => {
+      burst(ox, oy, 30);
+      for (const [tx, ty] of mine) parts.push({x: ox, y: oy, ox, oy, tx, ty, life: 0, delay: R(0, .25), travel: R(1.1, 1.5), hold: 4.5, max: 6.2, col: PAL[Math.floor(Math.random() * 4)], size: isMobile ? R(1.5, 2.1) : R(1.8, 2.5), mode: "text", tw: R(0, 6)});
+    }, ox + R(-40, 40));
+  });
+}
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+function stepFireworks(dt) {
+  ctx.clearRect(0, 0, cw, ch);
+  ctx.globalCompositeOperation = "lighter";
+  for (let i = rockets.length - 1; i >= 0; i--) {
+    const r = rockets[i]; r.t += dt / r.dur;
+    const e = easeOut(Math.min(1, r.t)), x = r.x0 + (r.x1 - r.x0) * e, y = r.y0 + (r.y1 - r.y0) * e;
+    ctx.strokeStyle = "rgba(255,220,150,.7)"; ctx.lineWidth = 2;
+    const e2 = easeOut(Math.max(0, r.t - .08));
+    ctx.beginPath(); ctx.moveTo(r.x0 + (r.x1 - r.x0) * e2, r.y0 + (r.y1 - r.y0) * e2); ctx.lineTo(x, y); ctx.stroke();
+    ctx.fillStyle = "#fff6d0"; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill();
+    if (r.t >= 1) { rockets.splice(i, 1); r.onBoom(); }
+  }
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i]; p.life += dt;
+    let a;
+    if (p.mode === "text") {
+      const t = Math.max(0, p.life - p.delay);
+      if (t < p.travel) {
+        const e = easeOut(t / p.travel), arc = Math.sin(e * Math.PI) * 30;
+        p.x = p.ox + (p.tx - p.ox) * e; p.y = p.oy + (p.ty - p.oy) * e - arc; a = Math.min(1, t * 3);
+      } else if (t < p.travel + p.hold) {
+        p.x = p.tx; p.y = p.ty; a = .75 + .25 * Math.sin(p.life * 7 + p.tw);
+      } else { p.mode = "free"; p.vx = R(-20, 20); p.vy = R(-10, 30); p.life = 0; p.max = R(1.2, 1.9); continue; }
+      
+      const isMob = cw < 560;
+      const sz = p.size * (isMob ? 0.9 : 1);
+      // Soft outer shimmer (controlled tight glow so letters remain crisp and never blur into a white blob)
+      ctx.globalAlpha = a * 0.15;
+      ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.arc(p.x, p.y, sz * 1.8, 0, 7); ctx.fill();
+      // Sharp core spark
+      ctx.globalAlpha = Math.min(1, a * 0.88);
+      ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.arc(p.x, p.y, sz, 0, 7); ctx.fill();
+      // Center pinpoint highlight
+      ctx.globalAlpha = Math.min(1, a * 0.92);
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(p.x, p.y, sz * 0.42, 0, 7); ctx.fill();
+    } else {
+      p.vx *= Math.pow(.25, dt); p.vy = p.vy * Math.pow(.25, dt) + 110 * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      a = Math.max(0, 1 - p.life / p.max);
+      if (p.life > p.max) { parts.splice(i, 1); continue; }
+      ctx.globalAlpha = a * .22; ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 3, 0, 7); ctx.fill();
+      ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 7); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+}
+
+/* ---------------- main loop ---------------- */
+let last = performance.now(), clock = 0;
+function loop(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; clock += dt;
+  if (player) {
+    if (player.floating) {
+      player.t = Math.min(1, player.t + dt / 13);
+      const e = 1 - Math.pow(1 - player.t, 2.2);
+      const [x0, y0, sA] = player.from, [x1, y1, sB] = player.to;
+      player.x = x0 + (x1 - x0) * e + Math.sin(e * Math.PI * 2) * 40 * (1 - e);
+      player.y = y0 + (y1 - y0) * e;
+      player.s = sA + (sB - sA) * e;
+    }
+    place(player, player.x, player.y + Math.sin(clock * 2.2) * 4 * player.s, player.s, Math.sin(clock * 1.7) * 3);
+  }
+  for (let i = npcs.length - 1; i >= 0; i--) {
+    const n = npcs[i]; n.x += n.vx * dt;
+    place(n, n.x, n.y + Math.sin(clock * 2 + n.ph) * 3 * n.s, n.s, Math.sin(clock * 1.6 + n.ph) * 4);
+    if (n.x < -200 || n.x > W + 200) { n.g.remove(); n.glow.remove(); npcs.splice(i, 1); }
+  }
+  for (let i = lanterns.length - 1; i >= 0; i--) {
+    const l = lanterns[i]; l.y += l.vy * dt; l.s *= Math.pow(.97, dt);
+    l.g.setAttribute("transform", `translate(${f1(l.x + Math.sin(clock * .8 + l.ph) * l.sw)} ${f1(l.y)}) rotate(${f1(Math.sin(clock + l.ph) * 5)}) scale(${l.s.toFixed(3)})`);
+    if (l.y < -120) { l.g.remove(); lanterns.splice(i, 1); }
+  }
+  stepFireworks(dt);
+  requestAnimationFrame(loop);
+}
+
+/* ---------------- note + restart ---------------- */
+$("noteTitle").textContent = CFG.noteTitle;
+$("noteBody").innerHTML = CFG.noteBody.map(t => `<p>${t.replace(/[<>&]/g, c => ({"<": "&lt;", ">": "&gt;", "&": "&amp;"}[c]))}</p>`).join("");
+$("noteSign").textContent = CFG.noteSign;
+
+/* ---------------- photo gallery ---------------- */
+const photos = ["photo1.jpg", "photo2.jpg", "photo3.jpg"];
+let photoIdx = 0;
+const currentPhoto = $("currentPhoto");
+const photoCaption = $("photoCaption");
+const dots = document.querySelectorAll("#photoDots .dot");
+
+function showPhoto(idx) {
+  photoIdx = (idx + photos.length) % photos.length;
+  currentPhoto.style.opacity = 0;
+  setTimeout(() => {
+    currentPhoto.src = photos[photoIdx];
+    currentPhoto.style.opacity = 1;
+    photoCaption.textContent = `ความทรงจำ ${photoIdx + 1} / ${photos.length} 💖 (แตะรูปเพื่อเปลี่ยน)`;
+    dots.forEach((d, i) => d.classList.toggle("active", i === photoIdx));
+  }, 150);
+}
+
+if ($("polaroidCard")) {
+  $("polaroidCard").addEventListener("click", () => showPhoto(photoIdx + 1));
+  $("photoNext").addEventListener("click", (e) => { e.stopPropagation(); showPhoto(photoIdx + 1); });
+  $("photoPrev").addEventListener("click", (e) => { e.stopPropagation(); showPhoto(photoIdx - 1); });
+  dots.forEach(dot => {
+    dot.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showPhoto(+dot.dataset.index);
+    });
+  });
+}
+$("againBtn").addEventListener("click", () => {
+  state.timers.forEach(clearTimeout); state.timers = [];
+  clearInterval(state.npcTimer); clearInterval(state.lanTimer); clearInterval(state.fwTimer);
+  $("noteWrap").classList.remove("show");
+  npcs.forEach(n => { n.g.remove(); n.glow.remove(); }); npcs = [];
+  lanterns.forEach(l => l.g.remove()); lanterns = [];
+  if (player) { player.g.remove(); player.glow.remove(); player = null; }
+  parts = []; rockets = [];
+  state.night = false; $("night").setAttribute("opacity", 0); $("moonGlow").setAttribute("opacity", 0);
+  btn.textContent = "จุดเทียน"; btn.classList.replace("pink", "orange"); hint.textContent = "จุดเทียนก่อนนะ";
+  state.phase = "pick"; $("pick").classList.remove("gone");
+});
+
+let rt;
+addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(buildStatic, 200); });
+buildStatic();
+(document.fonts && document.fonts.load ? document.fonts.load('700 100px "Mali"') : Promise.resolve()).catch(() => {});
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

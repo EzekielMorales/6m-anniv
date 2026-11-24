@@ -1,0 +1,824 @@
+/* ===================================================================
+   Full Procedural SVG Scrapbook Loy Krathong Web App
+   สุขสันต์วันครบรอบ 6 เดือนนะมิ้ว · ปั้นฉากและกระทงด้วย SVG แท้ 100%
+   =================================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --paper-cream: #faf7ee;
+  --line-blue: #dce7f5;
+  --margin-red: #f38b82;
+  --text-dark: #3c322b;
+  --text-soft: #675b51;
+  --tape-pink: rgba(255, 175, 189, 0.88);
+  --tape-yellow: rgba(255, 235, 150, 0.88);
+  --tape-mint: rgba(168, 230, 207, 0.88);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper-cream);
+  font-family: 'Mali', 'Itim', 'Prompt', sans-serif;
+  color: var(--text-dark);
+}
+
+/* ==================== Top Nav ==================== */
+.top-nav {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 100;
+}
+
+.paper-icon-btn {
+  background: #fff;
+  border: 3px solid #eedec4;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+  transition: transform 0.2s ease, background 0.2s;
+}
+
+.paper-icon-btn:hover {
+  transform: scale(1.1) rotate(5deg);
+  background: #fffdf5;
+}
+
+/* ==================== Main Viewport ==================== */
+.app-viewport {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Screen Transitions */
+.fullscreen-screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.fullscreen-screen.active {
+  display: block;
+  opacity: 1;
+}
+
+/* ==================== SCREEN 1: SELECT KRATHONG (SVG SLIDER) ==================== */
+#select-screen {
+  background: var(--paper-cream);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Lined notebook paper texture background */
+.notebook-lined-bg {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 27px,
+    var(--line-blue) 28px
+  );
+  background-size: 100% 28px;
+  pointer-events: none;
+}
+
+.notebook-lined-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 12%;
+  width: 2px;
+  background: var(--margin-red);
+  opacity: 0.6;
+}
+
+.notebook-lined-bg::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 12%;
+  width: 2px;
+  background: var(--margin-red);
+  opacity: 0.35;
+}
+
+/* Header Title Banner */
+.select-header-banner {
+  position: absolute;
+  top: 25px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+}
+
+.banner-tag-box {
+  position: relative;
+  background: #fffdf0;
+  border: 3.5px solid #222;
+  border-radius: 12px;
+  padding: 8px 38px 10px 38px;
+  box-shadow: 0 6px 14px rgba(40, 30, 20, 0.15);
+  transform: rotate(-0.5deg);
+}
+
+.banner-tag-box::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #333;
+}
+
+.banner-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2b2b2b;
+  text-shadow: 1px 1px 0 #fff;
+  letter-spacing: 1px;
+}
+
+.tape-decor {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(2deg);
+  width: 70px;
+  height: 18px;
+  background: var(--tape-yellow);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.moon-sticker-corner {
+  position: absolute;
+  top: -10px;
+  right: 14%;
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  animation: moonFloat 3.5s infinite alternate ease-in-out;
+}
+
+.corner-moon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes moonFloat {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-6px) rotate(4deg); }
+}
+
+/* Carousel Track */
+.carousel-viewport {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.carousel-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+.carousel-slide {
+  flex: 0 0 100vw;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.svg-mount {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+/* Pure SVG Krathong Styling */
+.svg-krathong {
+  width: 100%;
+  height: auto;
+  max-height: 52vh;
+  display: block;
+  overflow: visible;
+}
+
+/* Flame animation inside SVG */
+.flame-element {
+  transform-origin: 250px 145px;
+  animation: svgFlameFlicker 0.45s infinite alternate ease-in-out;
+}
+
+.ambient-glow {
+  animation: glowPulse 1.6s infinite alternate ease-in-out;
+}
+
+@keyframes svgFlameFlicker {
+  0% { transform: scale(0.92) skewX(-2deg); }
+  100% { transform: scale(1.1) skewX(2deg); }
+}
+
+@keyframes glowPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.1); opacity: 1; }
+}
+
+.smoke-line {
+  animation: smokeWiggle 2.5s infinite linear;
+}
+
+@keyframes smokeWiggle {
+  0% { stroke-dashoffset: 0; opacity: 0.6; }
+  100% { stroke-dashoffset: 12; opacity: 0.2; }
+}
+
+/* Carousel Arrows */
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
+  border: 3.5px solid #333;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.18);
+  z-index: 30;
+  transition: all 0.2s ease;
+}
+
+.left-arrow { left: 24px; }
+.right-arrow { right: 24px; }
+
+.nav-arrow:hover {
+  background: #fff8e8;
+  transform: translateY(-50%) scale(1.12);
+}
+
+/* Bottom Controls */
+.select-bottom-overlay {
+  position: absolute;
+  bottom: 25px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  z-index: 35;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.carousel-dots .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d3c7b2;
+  border: 2px solid #555;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.carousel-dots .dot.active {
+  background: #c44536;
+  border-color: #333;
+  transform: scale(1.3);
+  box-shadow: 0 2px 8px rgba(196, 69, 54, 0.45);
+}
+
+/* Paper Buttons */
+.paper-btn {
+  background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+  color: #fff;
+  border: 3.5px solid #fff;
+  border-radius: 30px;
+  padding: 12px 28px;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(214, 48, 49, 0.4);
+  transition: all 0.22s ease;
+}
+
+.paper-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 10px 24px rgba(214, 48, 49, 0.5);
+}
+
+.paper-btn.big-btn {
+  font-size: 18px;
+  padding: 13px 34px;
+  box-shadow: 0 8px 22px rgba(214, 48, 49, 0.45);
+}
+
+.paper-btn.sm {
+  font-size: 14px;
+  padding: 8px 18px;
+}
+
+.paper-btn.highlight {
+  background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+}
+
+/* ==================== SCREEN 2: PROCEDURAL SVG RIVERSIDE SCENE ==================== */
+#river-screen {
+  background: #64b5f6;
+  position: relative;
+  overflow: hidden;
+}
+
+.river-stage-fullscreen {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.svg-scene-mount {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.svg-stage-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Dynamic Sky Lanterns Layer */
+.sky-lanterns-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.lantern-fly {
+  position: absolute;
+  width: 38px;
+  height: 56px;
+  background: url('lantern_sticker.png') no-repeat center center / contain;
+  filter: drop-shadow(0 4px 10px rgba(255, 195, 60, 0.85));
+  animation: lanternAscend 15s linear forwards;
+}
+
+@keyframes lanternAscend {
+  0% { transform: translateY(0) scale(0.9) rotate(0deg); opacity: 1; }
+  50% { transform: translateY(-220px) scale(0.75) rotate(4deg); opacity: 0.9; }
+  100% { transform: translateY(-480px) scale(0.4) rotate(-3deg); opacity: 0; }
+}
+
+/* The Selected Krathong SVG Actor */
+.krathong-actor {
+  position: absolute;
+  width: 150px;
+  height: auto;
+  z-index: 25;
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+
+.krathong-actor .svg-krathong {
+  max-height: none;
+}
+
+/* State 1: On the Riverbank */
+.krathong-actor.on-bank {
+  bottom: 40px;
+  left: 56%;
+  transform: translateX(-50%);
+}
+
+/* State 2: Drifting in the River */
+.krathong-actor.floating {
+  animation: krathongRiverDrift 22s ease-in-out forwards;
+}
+
+/* Flame & Aura control inside actor SVG */
+.krathong-actor:not(.candle-lit) .candle-aura-group,
+.krathong-actor:not(.candle-lit) .flame-element,
+.krathong-actor:not(.candle-lit) .smoke-line {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.krathong-actor.candle-lit .candle-aura-group,
+.krathong-actor.candle-lit .flame-element,
+.krathong-actor.candle-lit .smoke-line {
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+/* Bobbing motion on water */
+.actor-svg-mount {
+  animation: krathongBob 2.6s infinite ease-in-out alternate;
+}
+
+@keyframes krathongBob {
+  0% { transform: translateY(0) rotate(-1.5deg); }
+  100% { transform: translateY(-7px) rotate(2deg); }
+}
+
+@keyframes krathongRiverDrift {
+  0% {
+    left: 56%;
+    bottom: 40px;
+    transform: translateX(-50%) scale(1);
+  }
+  25% {
+    left: 68%;
+    bottom: 65px;
+    transform: translateX(-50%) scale(0.92);
+  }
+  60% {
+    left: 80%;
+    bottom: 125px;
+    transform: translateX(-50%) scale(0.78);
+  }
+  100% {
+    left: 88%;
+    bottom: 210px;
+    transform: translateX(-50%) scale(0.58);
+  }
+}
+
+/* Concentric Water Ripples */
+.water-ripples-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.ripple-circle {
+  position: absolute;
+  border: 2.5px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: rippleSpread 2.8s linear forwards;
+}
+
+@keyframes rippleSpread {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
+}
+
+/* Action Control Bar (จุดเทียน / ลอยกระทง) */
+.river-action-bar {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 35;
+  pointer-events: auto;
+}
+
+.action-pill-btn {
+  background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+  color: #fff;
+  border: 3.5px solid #fff;
+  border-radius: 30px;
+  padding: 13px 32px;
+  font-size: 19px;
+  box-shadow: 0 8px 24px rgba(214, 48, 49, 0.5);
+  animation: pulseBtn 1.8s infinite ease-in-out;
+}
+
+@keyframes pulseBtn {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.action-pill-btn.hidden {
+  display: none !important;
+}
+
+/* ==================== FIREWORKS TEXT DISPLAY ==================== */
+.fireworks-sky-layer {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  right: 0;
+  height: 48%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.firework-text-banner {
+  background: rgba(255, 253, 240, 0.96);
+  border: 4px solid #ffcc00;
+  border-radius: 24px;
+  padding: 14px 28px;
+  text-align: center;
+  box-shadow: 0 10px 35px rgba(255, 204, 0, 0.65), 0 4px 15px rgba(0,0,0,0.18);
+  animation: bannerPop 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+.firework-text-banner.hidden {
+  display: none !important;
+}
+
+@keyframes bannerPop {
+  0% { transform: scale(0.4) rotate(-5deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.firework-stars-burst {
+  font-size: 18px;
+  color: #f39c12;
+  margin-bottom: 2px;
+}
+
+.firework-glow-title {
+  font-size: 34px;
+  font-weight: 700;
+  color: #e74c3c;
+  text-shadow: 0 0 14px rgba(255, 235, 59, 0.95), 1px 1px 0 #fff;
+  letter-spacing: 1px;
+}
+
+.firework-glow-title.anniv-title {
+  font-size: 28px;
+  color: #9b59b6;
+}
+
+.firework-sub-sparkles {
+  font-size: 15px;
+  color: #e67e22;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Open Note Button */
+.open-note-pill {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 3px solid #ebd9ba;
+  border-radius: 25px;
+  padding: 11px 26px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: #7a4726;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  z-index: 35;
+  transition: all 0.2s ease;
+  animation: pulseBtn 2s infinite ease-in-out;
+}
+
+.open-note-pill.hidden {
+  display: none !important;
+}
+
+/* ==================== STEP 3: NOTEBOOK LETTER TO MEW ==================== */
+.note-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  transition: opacity 0.3s ease;
+}
+
+.note-modal.hidden {
+  display: none !important;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 16, 12, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.notebook-letter-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: #fffdf5;
+  border-radius: 14px;
+  border: 4px solid #fff;
+  padding: 20px 20px 22px 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  transform: rotate(-1deg);
+  animation: letterSlideUp 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 25px,
+    #e8edf5 26px
+  );
+  background-size: 100% 26px;
+  line-height: 26px;
+}
+
+@keyframes letterSlideUp {
+  0% { transform: translateY(50px) scale(0.88) rotate(-4deg); opacity: 0; }
+  100% { transform: translateY(0) scale(1) rotate(-1deg); opacity: 1; }
+}
+
+.washi-tape {
+  position: absolute;
+  height: 22px;
+  z-index: 10;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+}
+
+.tape-mint {
+  width: 110px;
+  background: var(--tape-mint);
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(1deg);
+}
+
+.close-card-btn {
+  position: absolute;
+  top: 6px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+  z-index: 10;
+}
+
+.close-card-btn:hover {
+  color: #c44536;
+}
+
+/* Polaroid Photo inside Letter */
+.polaroid-wrapper {
+  position: relative;
+  width: 150px;
+  margin: 6px auto 14px auto;
+  background: #fff;
+  padding: 8px 8px 24px 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  transform: rotate(2deg);
+}
+
+.photo-inner {
+  width: 100%;
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.photo-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-tape {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 50px;
+  height: 16px;
+  background: var(--tape-yellow);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Letter Content */
+.letter-header {
+  font-size: 21px;
+  font-weight: 700;
+  color: #c44536;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.letter-text {
+  font-size: 14.5px;
+  color: #4a3e36;
+  white-space: pre-line;
+  margin: 10px 0;
+  min-height: 90px;
+  text-align: center;
+}
+
+.letter-footer {
+  text-align: right;
+  font-size: 15px;
+  font-weight: 600;
+  color: #8c5b36;
+  margin-right: 12px;
+  margin-bottom: 12px;
+}
+
+.letter-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .banner-title {
+    font-size: 24px;
+  }
+  .banner-tag-box {
+    padding: 6px 28px 8px 28px;
+  }
+  .moon-sticker-corner {
+    width: 52px;
+    height: 52px;
+    right: 6%;
+  }
+  .firework-glow-title {
+    font-size: 26px;
+  }
+  .firework-glow-title.anniv-title {
+    font-size: 22px;
+  }
+  .krathong-actor {
+    width: 125px;
+  }
+  .action-pill-btn {
+    font-size: 17px;
+    padding: 11px 26px;
+  }
+}
