@@ -91,4 +91,4 @@ This project has zero dependencies and runs natively in modern browsers:
 
 ---
 
-*Made with love for Mew ❤️ Happy 6th Month Anniversary!*
+*Made with love for Milk ❤️ Happy 6th Month Anniversary!*
