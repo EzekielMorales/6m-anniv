@@ -175,18 +175,21 @@ body{
 <defs>
 <pattern id="lines" width="24" height="17" patternUnits="userSpaceOnUse"><path d="M0,16 H24" stroke="#5f7fa8" stroke-width="1.1" opacity="0.45"/></pattern>
 <pattern id="bglines" width="40" height="34" patternUnits="userSpaceOnUse"><path d="M0,33 H40" stroke="#9fb6d3" stroke-width="1.6"/></pattern>
-<filter id="paper" x="-20%" y="-20%" width="150%" height="150%">
+<filter id="paper" x="-50%" y="-50%" width="200%" height="200%">
   <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="n"/>
   <feDisplacementMap in="SourceGraphic" in2="n" scale="5" result="d"/>
-  <feDropShadow in="d" dx="8" dy="10" stdDeviation="5" flood-color="#3a3428" flood-opacity="0.32"/>
+  <feDropShadow in="d" dx="6" dy="8" stdDeviation="4" flood-color="#3a3428" flood-opacity="0.25"/>
 </filter>
-<filter id="float" x="-30%" y="-30%" width="170%" height="170%">
+<filter id="float" x="-60%" y="-60%" width="250%" height="250%">
   <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="5" result="n"/>
   <feDisplacementMap in="SourceGraphic" in2="n" scale="5" result="d"/>
-  <feDropShadow in="d" dx="14" dy="18" stdDeviation="8" flood-color="#3a3428" flood-opacity="0.26"/>
+  <feDropShadow in="d" dx="8" dy="10" stdDeviation="5" flood-color="#3a3428" flood-opacity="0.22"/>
 </filter>
-<filter id="lite" x="-20%" y="-20%" width="150%" height="150%">
-  <feDropShadow dx="7" dy="9" stdDeviation="4" flood-color="#2a2a40" flood-opacity="0.3"/>
+<filter id="star" x="-100%" y="-100%" width="300%" height="300%">
+  <feDropShadow dx="3" dy="4" stdDeviation="2.5" flood-color="#3a3428" flood-opacity="0.22"/>
+</filter>
+<filter id="lite" x="-50%" y="-50%" width="200%" height="200%">
+  <feDropShadow dx="5" dy="7" stdDeviation="3.5" flood-color="#2a2a40" flood-opacity="0.25"/>
 </filter>
 <filter id="blur8"><feGaussianBlur stdDeviation="8"/></filter>
 <radialGradient id="glow"><stop offset="0" stop-color="#ffd96b" stop-opacity="0.9"/><stop offset="0.4" stop-color="#ffc24d" stop-opacity="0.35"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
@@ -564,7 +567,7 @@ function buildStatic() {
   for (let i = 0; i < (portrait ? 12 : 8); i++) {
     const x = 60 + rnd() * (W - 120), y = starTop + rnd() * (starBot - starTop);
     if (Math.hypot(x - mx, y - my) < 110 || Math.hypot(x - cx0, y - cy0) < 130) continue;
-    s += cut([[poly(starPts(x, y, 9 + rnd() * 9)), "#f7d56e"]], "", "float");
+    s += cut([[poly(starPts(x, y, 9 + rnd() * 9)), "#f7d56e"]], "", "star");
   }
   s += `</g>`;
   // bank + village
