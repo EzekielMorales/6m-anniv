@@ -744,15 +744,15 @@ const SPRITES = {};
 function getSprite(col) {
   if (SPRITES[col]) return SPRITES[col];
   const sc = document.createElement("canvas");
-  const sDim = 28;
+  const sDim = 32;
   sc.width = sDim; sc.height = sDim;
   const sCtx = sc.getContext("2d");
   const h = sDim / 2;
   const grad = sCtx.createRadialGradient(h, h, 0, h, h, h);
   grad.addColorStop(0, "#ffffff");
-  grad.addColorStop(0.2, "#fff8e6");
+  grad.addColorStop(0.25, "#fffbee");
   grad.addColorStop(0.5, col);
-  grad.addColorStop(0.75, col);
+  grad.addColorStop(0.8, col);
   grad.addColorStop(1, "rgba(255,255,255,0)");
   sCtx.fillStyle = grad;
   sCtx.beginPath(); sCtx.arc(h, h, h, 0, Math.PI * 2); sCtx.fill();
@@ -784,10 +784,10 @@ function textPoints(lines, cx, cy, maxW, maxH) {
   const oc = document.createElement("canvas"), o = oc.getContext("2d");
   const fam = '"Mali","Itim","Sarabun","Leelawadee UI","Thonburi",sans-serif';
   const isMob = cw < 560;
-  const fw = isMob ? "600" : "700";
+  const fw = "700";
   o.font = `${fw} 100px ${fam}`;
   const widest = Math.max(...lines.map(l => o.measureText(l).width));
-  const fs = Math.min(isMob ? 78 : 130, maxW / widest * 100, maxH / (lines.length * 1.35));
+  const fs = Math.min(isMob ? 80 : 130, maxW / widest * 100, maxH / (lines.length * 1.35));
   const lh = fs * 1.35;
   const padX = Math.ceil(fs * 0.6) + 40;
   const padY = Math.ceil(fs * 1.0) + 50; // extra vertical headroom for stacked Thai tone marks (e.g. ไม้โท บน สระอิ)
@@ -797,14 +797,19 @@ function textPoints(lines, cx, cy, maxW, maxH) {
   const bh = textH + padY * 2;
   oc.width = bw; oc.height = bh;
   o.font = `${fw} ${fs}px ${fam}`; o.textAlign = "center"; o.textBaseline = "middle"; o.fillStyle = "#fff";
-  lines.forEach((l, i) => o.fillText(l, bw / 2, padY + lh * (i + .5)));
+  o.lineWidth = Math.max(2, fs * 0.045);
+  o.strokeStyle = "#fff";
+  lines.forEach((l, i) => {
+    o.strokeText(l, bw / 2, padY + lh * (i + .5));
+    o.fillText(l, bw / 2, padY + lh * (i + .5));
+  });
   const data = o.getImageData(0, 0, bw, bh).data;
-  const maxPts = isMob ? 460 : 1300;
-  let gap = Math.max(isMob ? 4 : 3, Math.round(fs / (isMob ? 9 : 12))), pts;
+  const maxPts = isMob ? 750 : 1600;
+  let gap = Math.max(3, Math.round(fs / (isMob ? 13 : 14))), pts;
   do {
     pts = [];
     for (let y = 0; y < bh; y += gap) for (let x = 0; x < bw; x += gap)
-      if (data[(y * bw + x) * 4 + 3] > 140) pts.push([cx - textW / 2 + (x - padX) + R(-.3, .3), cy - textH / 2 + (y - padY) + R(-.3, .3)]);
+      if (data[(y * bw + x) * 4 + 3] > 110) pts.push([cx - textW / 2 + (x - padX) + R(-.35, .35), cy - textH / 2 + (y - padY) + R(-.35, .35)]);
     gap++;
   } while (pts.length > maxPts);
   return {pts, fs, bw: textW};
@@ -849,11 +854,11 @@ function stepFireworks(dt) {
         const e = easeOut(t / p.travel), arc = Math.sin(e * Math.PI) * 30;
         p.x = p.ox + (p.tx - p.ox) * e; p.y = p.oy + (p.ty - p.oy) * e - arc; a = Math.min(1, t * 3);
       } else if (t < p.travel + p.hold) {
-        p.x = p.tx; p.y = p.ty; a = .75 + .25 * Math.sin(p.life * 7 + p.tw);
+        p.x = p.tx; p.y = p.ty; a = .82 + .18 * Math.sin(p.life * 7 + p.tw);
       } else { p.mode = "free"; p.vx = R(-20, 20); p.vy = R(-10, 30); p.life = 0; p.max = R(1.1, 1.8); continue; }
       
       const sp = getSprite(p.col);
-      const sz = p.size * (isMob ? 2.9 : 3.4);
+      const sz = p.size * (isMob ? 3.5 : 4.0);
       ctx.globalAlpha = a;
       ctx.drawImage(sp, p.x - sz * 0.5, p.y - sz * 0.5, sz, sz);
     } else {
@@ -862,7 +867,7 @@ function stepFireworks(dt) {
       a = Math.max(0, 1 - p.life / p.max);
       if (p.life > p.max) { parts.splice(i, 1); continue; }
       const sp = getSprite(p.col);
-      const sz = p.size * (isMob ? 2.6 : 3.2);
+      const sz = p.size * (isMob ? 2.8 : 3.4);
       ctx.globalAlpha = a;
       ctx.drawImage(sp, p.x - sz * 0.5, p.y - sz * 0.5, sz, sz);
     }
