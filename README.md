@@ -2,6 +2,8 @@
 
 A lightweight, interactive web experience celebrating Loy Krathong and a romantic 6-month anniversary, crafted in a paper cutout scrapbook aesthetic on lined notebook paper.
 
+🔗 **Live Demo:** [https://ezekielmorales.github.io/6m-anniv/](https://ezekielmorales.github.io/6m-anniv/)
+
 ---
 
 ## 🌟 Features
